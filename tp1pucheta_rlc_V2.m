@@ -1,13 +1,15 @@
 %     Ejercicio 1 Tp Control 2 - Prof: Dr. Pucheta; Alumno: Valdez Benavidez, Mauricio Luciano
 %    ------------------------------------------------------------------------------------------------
-% 1)  Asignar valores a R=4,7K?, L=10?Hy, y C=100nF. Obtener simulaciones que
-%     permitan estudiar la din�mica del sistema, con una entrada de tensi�n escal�n de 12V,
+% 1)  Asignar valores a R=4,7Kohm, L=10uHy, y C=100nF. Obtener simulaciones que
+%     permitan estudiar la dinámica del sistema, con una entrada de tensión escalón de 12V,
 %     que cada 1ms cambia de signo.
-%
+%2)   Asignar valores a R=5,6Kohm, L=10uHy, y C=100nF; repetir lo anterior para comparar el 
+%     resultado y verificar la correcta simulación
+
 clc, clear all, close all
-% Defino valores
-%R=4.7e3;  L=10e-6; C=100e-9;
-R=5.6e3;  L=10e-6; C=100e-9;
+% Defino valores de RLC
+%R=4.7e3;  L=10e-6; C=100e-9; %para punto 1)
+R=5.6e3;  L=10e-6; C=100e-9;  %para punto 2)
 % Defino matrices
 matA=[[-R/L -1/L];
       [1/C 0]]; 
@@ -30,7 +32,7 @@ tsim=tL*3
 %simulacion
 
 Vin=-12; Vant=0; ii=1; 
-t=[]; paso=tsim/h; aux=0.001/h;
+t=[]; paso=tsim/h; %aux=0.001/h;
 
 %Condiciones iniciales
 vc(1)=0; il(1)=0; u(1)=12;
@@ -46,7 +48,7 @@ t(ii)=ii*h;
 xp=matA*(x-X0)+ matB*u(ii);
 x=x+h*xp;
 if(t(ii)>tant)
-Vin=Vin*(-1); %Con esto var�a de 12 a -12 cada 1ms
+Vin=Vin*(-1); %Con esto varía de 12 a -12 cada 1ms
 tant=tant+1e-3;
 end
 ii=ii+1;
