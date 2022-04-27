@@ -32,7 +32,7 @@ tsim=tL*3
 %simulacion
 
 Vin=-12; Vant=0; ii=1; 
-t=[]; paso=tsim/h; %aux=0.001/h;
+t=[]; paso=tsim/h; 
 
 %Condiciones iniciales
 vc(1)=0; il(1)=0; u(1)=12;
