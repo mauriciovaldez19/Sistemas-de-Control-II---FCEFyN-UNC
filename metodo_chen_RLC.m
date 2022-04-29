@@ -12,7 +12,7 @@ pos= 110;
 %% Calculo FT para la tension del capacitor
 % Tomo 3 puntos (t1,y(t1),(2t1,y(2t1),(3t1,y(3t1), defino la variable pos, p/ selecc distintas posiciones de la tabla y realizar pruebas
 t1 = t(pos); y1 = Vc(pos);
-t2 = t(2*pos); y2 = Vc(2*pos)
+t2 = t(2*pos); y2 = Vc(2*pos);
 t3 = t(3*pos); y3 = Vc(3*pos);
 
 % Valor de K en regimen, elijo el último de la tabla
@@ -27,8 +27,8 @@ eqn1=alfa1*alfa2==((k2^2)-(k1*k3))/((k1^2)+k2);
 eqn2=alfa1+alfa2==(k3+(k1*k2))/((k1^2)+k2);
 eqns = [eqn1 eqn2];
 s=solve(eqns,[alfa1 alfa2],'ReturnConditions',true);
-pretty (simplify(s.alfa1));
-pretty (simplify(s.alfa2));
+simplify(s.alfa1);
+simplify(s.alfa2);
 alfa1=s.alfa1(1);
 alfa2=s.alfa2(2);
 
@@ -46,13 +46,13 @@ T3_ang=beta*(T1_ang-T2_ang)+T1_ang;
 escalon = stepDataOptions;
 escalon.StepAmplitude,1;
 % Defino la funcion de transferencia y la dibujo
-G_Vc=tf(K*[T3_ang 1],conv([T1_ang 1],[T2_ang 1]));
+G_Vc=tf(K*[T3_ang 1],conv([T1_ang 1],[T2_ang 1]))
 
 %% Calculo FT para la Corriente del inductor
 % Tomo 3 puntos (t1,y(t1),(2t1,y(2t1),(3t1,y(3t1), defino la variable pos, p/ selecc distintas posiciones de la tabla y realizar pruebas
 
 t1_I = t(pos); y1_I = I(pos);
-t2_I = t(2*pos); y2_I = I(2*pos)
+t2_I = t(2*pos); y2_I = I(2*pos);
 t3_I = t(3*pos); y3_I = I(3*pos);
 
 % Valor de K en regimen, elijo el último de la tabla
@@ -67,8 +67,8 @@ eqn1_I=alfa1_I*alfa2_I==((k2_I^2)-(k1_I*k3_I))/((k1_I^2)+k2_I);
 eqn2_I=alfa1_I+alfa2_I==(k3_I+(k1_I*k2_I))/((k1_I^2)+k2_I);
 eqns_I = [eqn1_I eqn2_I];
 s_I=solve(eqns_I,[alfa1_I alfa2_I],'ReturnConditions',true);
-pretty (simplify(s_I.alfa1_I));
-pretty (simplify(s_I.alfa2_I));
+simplify(s_I.alfa1_I);
+simplify(s_I.alfa2_I);
 alfa1_I=s_I.alfa1_I(1);
 alfa2_I=s_I.alfa2_I(2);
 
@@ -86,14 +86,24 @@ T3_ang_I=beta_I*(T1_ang_I-T2_ang_I)+T1_ang_I;
 escalon = stepDataOptions;
 escalon.StepAmplitude,1;
 % Defino la funcion de transferencia y la dibujo
-G_I=tf(K_I*[T3_ang_I 1],conv([T1_ang_I 1],[T2_ang_I 1]));
+G_I=tf(K_I*[T3_ang_I 1],conv([T1_ang_I 1],[T2_ang_I 1]))
+
+%% Despejo los valores de RLC
+C=G_I.num{1}(2)
+L=(G_I.den{1}(1))/C
+R=(G_I.den{1}(2))/C
+
+%Calculo la nueva G con los valores de RLC con la ganancia K de la G_Vc
+G_aprox=tf(K,[L*C R*C 1]);
 
 
 %% Ploteo
-subplot(4,1,1);plot(t,Vc);grid on; title('Tensón en Capacitor');
+subplot(5,1,1);plot(t,Vc);grid on; title('Tensón en Capacitor');
 hold on;plot([t1 t2 t3],[y1,y2,y3],'+')
-subplot(4,1,2);plot(t,I);grid on; title('Corriente en el Inductor');
+subplot(5,1,2);plot(t,I);grid on; title('Corriente');
 hold on;plot([t1_I t2_I t3_I],[y1_I,y2_I,y3_I],'O')
 
-subplot(4,1,3);step(G_Vc,escalon,'r'),hold on;grid on;title('Tensión Estimada');
-subplot(4,1,4);step(G_I,escalon,'r'),hold on;grid on;title('Corriente Estimada');
+subplot(5,1,3);step(G_Vc,escalon,'r'),hold on;grid on;title('Tensión Estimada');
+subplot(5,1,4);step(G_I,escalon,'y'),hold on;grid on;title('Corriente Estimada');
+
+subplot(5,1,2);step(G_aprox,escalon,'g'),hold on;grid on;title('Tension Aproximada');
