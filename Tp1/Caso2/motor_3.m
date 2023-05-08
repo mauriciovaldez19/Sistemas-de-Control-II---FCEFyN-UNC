@@ -21,13 +21,12 @@ Tl=0; u=0;
     if(t>=0.025)
         u=12;
     end
-%     if(t>=0.125)        %tiempo indicado por consigna
+%     if(t>=0.1)        %tiempo indicado por consigna
 %         Tl=7.5e-2;    %Tl indicado por consigna
 %    end
-     if(t>=0.1501)  % tiempo tabla excel
-%          Tl=7.5e-2; % Tl indicado por la consigna
-         Tl=4.5e-2; % Tl que se ajusta a la rta de los datos del excel
-     end
+    if(t>=0.1501)  % tiempo tabla excel     
+       Tl=4.5e-2; % Tl que se ajusta a la rta de los datos del excel
+    end
      
 X=modmotorpunto2(t_etapa, X, u,Tl);
 x1(ii)=X(1);%Omega
@@ -46,14 +45,17 @@ W=valores(1:end,2);
 
 figure(1)
 subplot(2,1,1);hold on;
-plot(tt,W, 'g' );title('Velocidad angular , W[rad/seg]'); grid on;hold on; 
-plot(t,x1,color_);title('Salida y, \omega_t');hold on;
+plot(tt,W, 'g' );title('Velocidad angular , \omega[rad/seg]'); grid on;hold on; 
+plot(t,x1,color_);hold on;
 legend({'w de excel','w aproximada'},'Location','southeast')
 
 subplot(2,1,2);hold on;
-plot(t,acc,'r');
+plot(t,acc,'r');title('Tension de Entrada');
 xlabel('Tiempo [Seg.]');hold on;
 
+%figure(2)
+% plot(t,x3, color_);title('Corriente de armadura , Ia'); grid on;hold on; 
+% legend({'Ia aproximada'},'Location','southeast')
 
 
 
@@ -69,9 +71,10 @@ ia=xant(3);
 tita = xant(4);
 for ii=1:t_etapa/h
 wpp =(-wp*(Ra*J+Laa*B)-omega*(Ra*B+Ki*Km)+Va*Ki)/(J*Laa);
+iap=(-Ra*ia-Km*omega+Va)/Laa;
 wp=wp+h*wpp;
 wp=wp-(TL/J);
-ia=0;
+ia=ia+iap*h;
 omega = omega + h*wp;
 tita = tita + h*omega;
 end

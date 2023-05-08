@@ -22,9 +22,9 @@ TL_=valores(1:end,5);
 %Grafico de tensión y corriente de los valores importados
 figure(1)
 subplot(2,1,1);hold on
-plot(tt,W, 'b' );title('Velocidad angular , W[rad/seg]'); grid on;hold on; 
+plot(tt,W, 'b' );title('Velocidad angular , \omega[rad/seg]'); grid on;hold on; 
 subplot(2,1,2)
-plot(tt,Vin, 'b' );title('Tensión de entrada,[V]');grid on;hold on;
+plot(tt,Vin, 'b' );title('Tensión,[V]');grid on;hold on;
 
 %Defino la entrada para la simulación posterior
 t_etapa=1e-7;
@@ -93,7 +93,7 @@ G_w=tf(K*[T3 1],conv([T1 1],[T2 1]));
 
 figure(2)
 plot(tt,W, 'k' ); grid on; hold on;
-plot(t_G_w,y_G_w,'r'); title('G_w obtenida con método de Chen vs Tensiónes de tabla');
-legend({'w_t de excel','G_w obtenida con método de Chen'},'Location','southeast')
+plot(t_G_w,y_G_w,'r'); title('G_w (s) obtenida con método de Chen vs \omega de tabla');
+legend({'w_t de excel','G_w (s) obtenida con método de Chen'},'Location','southeast')
 
 

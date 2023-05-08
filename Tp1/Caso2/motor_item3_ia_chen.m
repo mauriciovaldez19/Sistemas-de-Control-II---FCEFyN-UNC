@@ -85,5 +85,5 @@ G_i=tf(K*[T3 1],conv([T1 1],[T2 1]));
 
 figure(3)
 plot(tt,Ia, 'k' ); grid on; hold on;
-plot(t_G_i,y_G_i,'r'); title('G_i obtenida con método de Chen vs Corrientes de tabla');
-legend({'I_a de excel','G_i obtenida con método de Chen'},'Location','southeast')
+plot(t_G_i,y_G_i,'r'); title('G_i(s) obtenida con método de Chen vs Corrientes de tabla');
+legend({'I_a de excel','G_i(s) obtenida con método de Chen'},'Location','southeast')

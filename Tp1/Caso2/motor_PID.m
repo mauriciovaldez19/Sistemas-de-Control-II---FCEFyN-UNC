@@ -11,8 +11,9 @@ X=-[0; 0; 0; 0];ii=0;t_etapa=1e-7;tF=.6;wRef=1;
 color_='m';
 
 %Constantes del PID
-Kp=0.5;Ki=8;Kd=0;color_='r';
-
+Kp=0.5;Ki=8;Kd=0; %definitivas
+%Kp=1;Ki=8;Kd=1; %de puebas
+color_='r';
 Ts=t_etapa;
 A1=((2*Kp*Ts)+(Ki*(Ts^2))+(2*Kd))/(2*Ts);
 B1=(-2*Kp*Ts+Ki*(Ts^2)-4*Kd)/(2*Ts);
@@ -54,7 +55,7 @@ subplot(4,1,3);hold on;
 plot(t,x3,color_);title('Ia');hold on;
 
 subplot(4,1,4);hold on;
-plot(t,x1,color_);title('Salida y, \omega_t');hold on;
+plot(t,x1,color_);title('\omega_t');hold on;
 
 
 %motor

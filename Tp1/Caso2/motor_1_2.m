@@ -14,7 +14,7 @@
 %%
 clc;clear;close all;
 X=-[0; 0; 0; 0];ii=0;t_etapa=1e-7;tF=5;
-color_='b';
+color_='r';
 Ts=t_etapa;
 u=12;
 for t=0:t_etapa:tF
@@ -27,12 +27,14 @@ x4(ii)=X(4);%tita
 acc(ii)=u;
 end
 t=0:t_etapa:tF;
-subplot(3,1,1);hold on;
-plot(t,x1,color_);title('Salida y, \omega_t');
-subplot(3,1,2);hold on;
-plot(t,x3,'k');title('Corriente de salida, i_a');
-subplot(3,1,3);hold on;
-plot(t,acc,'b');title('Entrada u_t, v_a');
+subplot(4,1,1);hold on;
+plot(t,x1,color_);title('\omega');
+subplot(4,1,2);hold on;
+plot(t,x4,'r');title('\theta');
+subplot(4,1,3);hold on;
+plot(t,x3,'r');title('i_a');
+subplot(4,1,4);hold on;
+plot(t,acc,'r');title('Accion de control');
 xlabel('Tiempo [Seg.]');
 
 %motor
@@ -40,6 +42,7 @@ function [X]=modmotorpunto2(t_etapa, xant, accion)
 Laa=366e-6; J=5e-9;Ra=55.6;B=0;Ki=6.49e-3;Km=6.53e-3;
 Va=accion;
 h=1e-7;
+%TL=0;
 TL=2.1278125e-5;    %se llego a ese valor luego de varias iteraciones.
 omega= xant(1);     %Se partió desde 1 y se fue bajando dividiendo por 10
 wp= xant(2);        %cada vez hasta que w fue + y luego busco algo de precisión
