@@ -1,6 +1,15 @@
+% Sistemas de Control II -FCEFyN-UNC 
+% Profesor: Dr.Ing. Pucheta, Julian
+% Alumno: Valdez Benavidez, Mauricio Luciano
+% Tp N° 2 - Caso de estudio 1 - 
+%   Inciso 2  
+% Considerar que no puede medirse la corriente y sólo pueda medirse el ángulo, 
+% por lo que debe implementarse un observador. Obtener la simulación en las mismas 
+% condiciones que en el punto anterior, y superponer las gráficas para comparar.
+% 
+%%
+
 clc;clear all;close all;
-
-
 %Parametros de motor
 Laa=5e-3;J=0.004;
 Ra=0.2;Bm=0.005;
@@ -28,13 +37,13 @@ Ao=A';
 Bo=C';
 Co=B';
 
-Qo=diag([.0000001 .1 .0001]);    Ro=1;
-
+% Qo=diag([.0001 .1 .01]);    Ro=1000;
+Qo=1e2*diag([40000 0 0]);    Ro=.01;
 Ko=lqr(Ao,Bo,Qo,Ro);
 
-Tf=100;h=1e-4;pasos=Tf/h; t=linspace(0,Tf,pasos);
-Ref=linspace(0,0,pasos);
-TL=linspace(0,0,pasos);
+Tf=100;h=1e-4;pasos=Tf/h; t=linspace(0,Tf,pasos); %Con Tf=300 y tc=100
+Ref=linspace(0,0,pasos);                    % se logra una mejora
+TL=linspace(0,0,pasos);                     % en la respuesta
 Tref=pi/2;
 Tl=1.15e-3;
 tc=20;
@@ -169,7 +178,7 @@ subplot(2, 2, 3);
 hold on
 plot(t,theta,'b');
 plot(t,theta_so,'r');
-plot(t,Ref,'g--');
+plot(t,Ref,'m');
 hold off
 legend({'Con observador','Sin observador','Referencia'})
 title('Poscion angular \theta_t');

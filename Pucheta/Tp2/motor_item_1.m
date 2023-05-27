@@ -1,3 +1,14 @@
+% Sistemas de Control II -FCEFyN-UNC 
+% Profesor: Dr.Ing. Pucheta, Julian
+% Alumno: Valdez Benavidez, Mauricio Luciano
+% Tp N° 2 - Caso de estudio 1 - 
+%   Inciso 1  
+% Implementar un sistema en variables de estado que controle el ángulo del motor, 
+% para consignas de pi/2 y –pi/2 cambiando cada 2 segundos y que el 
+% TL de 1,15 10-3 aparece sólo para pi/2, para -pi/2 es nulo. 
+% Hallar el valor de integración Euler adecuado. 
+% El objetivo es mejorar la dinámica del controlador que muestra la Fig. 1 
+%%
 clc;clear all;close all;
 %Parametros de motor
 Laa=5e-3;J=0.004;
