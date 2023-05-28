@@ -17,15 +17,28 @@ Mat_C = [1 0 0 0];
 
 %CONDICIONES INICIALES
 % alpha(1) = 1.17;        %El maximo ang inicial
-theta(1) = 0.0; 
+alpha(1) = 0.01; 
 ref = -10;
-% flag = 0;
+flag = 0;
+
+h = 1e-3;
+tiempo = (100/h);
+p_pp = 0;
+tita_pp = 0;
+
+omega(1) = 0; 
+p_p(1) = 0; 
+u(1) = 0; 
+p(1) = 0; 
+
+i = 1;
 
 %METODO LQR
 D = [1e2 100 1e4 20];  %Velocidad angular, Posicion angular, Posicion Carrito, Velocidad Carrito 
 Q = diag(D);
 R = 1000;
 Klqr = lqr(Mat_A,Mat_B,Q,R);
+Glqr=-inv(Mat_C*(eye(4)-inv(Mat_A+Mat_B*Klqr))*Mat_B); %%Es igual a Klqr(1)
 
 %LQR observador
 Qo=1*diag([1 10 1 10]);    Ro=1;
@@ -34,57 +47,47 @@ Bo=Mat_C';
 Co=Mat_B';
 Ko=lqr(Ao,Bo, Qo, Ro);
 
-Tf=100;h=1e-3;pasos=Tf/h;
-delta_pp = 0; delta_p(1) = 0; delta(1) = 0; 
-theta_pp = 0; theta_p(1) = 0; theta(1) = 0;
-delta_obs(1)=0;delta_p_obs(1)=0;
-u(1) = 0; 
+x_hat = [0 0 0 0]';
 
 i = 1;
-while(i<(pasos+1))
-    X = [delta(i); delta_p(i); theta(i); theta_p(i)];
-    X_obs = [delta_obs(i); delta_p_obs(i); theta(i); theta_p(i)];
-        %Ley de control
-    u(i) = -Klqr*X+Klqr(1)*ref;     color = 'r';              
-    u_obs(i) = -Ko*X_obs+Ko(1)*ref;      
-   
-%   SIN OBSERVADOR
-    %Sitema No Lineal
-    delta_pp = (1/(M+m))*(u(i)-m*long*theta_pp*cos(theta(i))+m*long*theta_p(i)^2*sin(theta(i))-Fricc*delta_p(i));
-    theta_pp = (1/long)*(g*sin(theta(i))-delta_pp*cos(theta(i)));
-    
-    %Integracion por Euler
-    delta_p(i+1) = delta_p(i)+h*delta_pp;
-    delta(i+1) = delta(i)+h*delta_p(i);
-    theta_p(i+1) = theta_p(i)+h*theta_pp;
-    theta(i+1) = theta(i)+h*theta_p(i);
-    
-%   CON OBSERVADOR
-    %Sitema No Lineal
-    delta_pp_obs = (1/(M+m))*(u_obs(i)-m*long*theta_pp*cos(theta(i))+m*long*theta_p(i)^2*sin(theta(i))-Fricc*delta_p(i));
-        
-    %Integracion por Euler
-    delta_p_obs(i+1) = delta_p(i)+h*delta_pp_obs;
-    delta_obs(i+1) = delta(i)+h*delta_p_obs(i);
-    
 
+while(i<(tiempo+1))
     
+    X = [p(i); p_p(i); alpha(i); omega(i)];
+    
+    %Ley de control
+    u(i) = -Klqr*X+Klqr(1)*ref; color = 'm';              
+%   u(i) = -Klqr*x_hat+Klqr(1)*ref; color = 'g'; 
+    
+    %Sitema No Lineal
+    p_pp = (1/(M+m))*(u(i)-m*long*tita_pp*cos(alpha(i))+m*long*omega(i)^2*sin(alpha(i))-Fricc*p_p(i));
+    tita_pp = (1/long)*(g*sin(alpha(i))-p_pp*cos(alpha(i)));
+    
+    %Integracion por Euler
+    p_p(i+1) = p_p(i)+h*p_pp;
+    p(i+1) = p(i)+h*p_p(i);
+    omega(i+1) = omega(i)+h*tita_pp;
+    alpha(i+1) = alpha(i)+h*omega(i);
+    
+%     %Observador
+%     y_salO(i) = Mat_C*x_hat;
+%     y_sal(i) = Mat_C*X;
+%     
+%     x_hatp = Mat_A*x_hat+Mat_B*u(i)+Ko*(y_sal(i)-y_salO(i));
+%     x_hat = x_hat+h*x_hatp ;
     
     i = i+1;
     
 end
 
 u(i) = u(i-1);
-t = 0:pasos; 
+t = 0:tiempo; 
 t = t*h;
 
 %Graficas 
 figure(1);hold on;
-subplot(3,2,1); plot(t,theta_p,color); grid on; title('Velocidad ángulo'); hold on;
-subplot(3,2,2); plot(t,theta,color); grid on; title('Ángulo'); hold on;
-subplot(3,2,3); plot(t,delta,color); grid on; title('Posición carro'); hold on;
-subplot(3,2,3); plot(t,delta_obs,'g'); hold on;
-subplot(3,2,4); plot(t,delta_p,color); grid on; title('Velocidad carro'); hold on;
-subplot(3,2,4); plot(t,delta_p_obs,'g'); hold on;
+subplot(3,2,1); plot(t,omega,color); grid on; title('Velocidad ángulo'); hold on;
+subplot(3,2,2); plot(t,alpha,color); grid on; title('Ángulo'); hold on;
+subplot(3,2,3); plot(t,p,color); grid on; title('Posición carro'); hold on;
+subplot(3,2,4); plot(t,p_p,color); grid on; title('Velocidad carro'); hold on;
 subplot(3,1,3); plot(t,u,color); grid on; title('Acción de control'); xlabel('Tiempo en Seg.'); hold on;
-

@@ -1,3 +1,13 @@
+% Sistemas de Control II -FCEFyN-UNC 
+% Profesor: Dr.Ing. Pucheta, Julian
+% Alumno: Valdez Benavidez, Mauricio Luciano
+% Tp N° 2 - Caso de estudio 2 - 
+%   Inciso 1  
+% Calcular un controlador que haga evolucionar al péndulo en el equilibrio inestable, 
+% partiendo de una condición inicial nula en el desplazamiento y termine en -10 metros manteniendo 
+% la vertical. Determinar el ángulo máximo que puede alejarse de la vertical en t=0 para que el sistema 
+% cumpla el objetivo de control.
+%%
 clc;clear all;
 
 %EQUILIBRIO INESTABLE
@@ -12,17 +22,17 @@ Mat_A = [0 1 0 0;                               %X1 = delta
          0 Fricc/(long*M) g*(m+M)/(long*M) 0];  %X4 = phi_p
     
 Mat_B = [0; 1/M; 0; -1/(long*M)];
-Mat_C = [1 0 0 0] 
+Mat_C = [1 0 0 0] ;
 
-% %     tiempo de integracion y tiempo de simulacion-> 2e-3 y 100
+% %     tiempo de integracion y tiempo de simulacion-> 1e-3 y 100
 % polos=eig(Mat_A)
 % tR=log(0.95)/polos(3); %dinámica mas rápida
 % tL=log(0.05)/polos(2); %dinámica mas lenta
 
 
 %CONDICIONES INICIALES
-% alpha(1) = 1.17;        %El maximo ang inicial
-alpha(1) = 0.0; 
+alpha(1) = 1.17;        %El maximo ang inicial
+% alpha(1) = 0.1; 
 ref = -10;
 flag = 0;
 
