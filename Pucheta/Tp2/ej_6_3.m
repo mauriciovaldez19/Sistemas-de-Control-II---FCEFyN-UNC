@@ -40,7 +40,7 @@ Mat_C=[1 0 1 0]; %La salida es posición y ángulo
 % % eig(Mat_Aa-Mat_Ba*Ka)
 % % K=Ka(1:4); KI=-Ka(5); %Los valores del controlador de obtienen del K ampliado
 %METODO LQR
-D = [1e2 100 1e4 20];  %Velocidad angular, Posicion angular, Posicion Carrito, Velocidad Carrito 
+D = [1e2 100 1e4 20];  %Velocidad angular, Posicion angular, Posicion Carro, Velocidad Carro 
 Q = diag(D);
 R = 1000;
 K = lqr(Mat_A,Mat_B,Q,R);
@@ -54,6 +54,7 @@ Qo = diag([1 0 0 1]);
 Ro = 1000;
 Ko = lqr(Mat_A_O,Mat_B_O,Qo,Ro);
 Go=Ko(1); %%Es igual a Klqr(1)
+
 % Mat_M_Dual=[Mat_B_O Mat_A_O*Mat_B_O Mat_A_O^2*Mat_B_O Mat_A_O^3*Mat_B_O];%Matriz Controlabilidad
 % % Ubicación del Observador. Algunas veces más rápido que el controlador
 % mui_o=real(mui)*5;
@@ -73,8 +74,8 @@ while(i<(tiempo+1))
 % u(i)=-K*estado+KI*psi(i+1);
 %  u(i)=-K*x_hat+KI*psi(i+1); 
 
-% u(i)=-K*estado+G*ref;
-u(i)=-K*x_hat;%+Go*ref; 
+u(i)=-K*estado+G*ref;
+% u(i)=-K*x_hat+G*ref; 
 
 
 p_pp=(1/(M+m))*(u(i)-m*long*tita_pp*cos(alfa(i))+m*long*omega(i)^2*sin(alfa(i))-Fricc*p_p(i));
