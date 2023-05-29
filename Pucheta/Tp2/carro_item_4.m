@@ -19,17 +19,13 @@ Mat_C = [1 0 0 0];
 % alpha(1) = 1.17;        %El maximo ang inicial
 alpha(1) = 0.01; 
 ref = -10;
-flag = 0;
 
 h = 1e-3;
 tiempo = (100/h);
 p_pp = 0;
 tita_pp = 0;
 
-omega(1) = 0; 
-p_p(1) = 0; 
-u(1) = 0; 
-p(1) = 0; 
+omega(1)= 0; p_p(1)= 0; u(1)= 0; p(1)= 0; 
 
 i = 1;
 
