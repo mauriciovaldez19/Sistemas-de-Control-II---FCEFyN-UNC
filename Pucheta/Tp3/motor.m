@@ -10,7 +10,9 @@
 % El objetivo es mejorar la dinámica del controlador que muestra la Fig. 1
 % verificando el resultado con las curvas del archivo xlsx adjunto
 %%
-close all; clear all; clc;
+% close all; clear all; clc;
+color='r';
+% color='m';
 
 %Se importan los datos de la tabla excel
 valores=xlsread('Curvas_Medidas_Motor_2023.xls'); 
@@ -35,12 +37,11 @@ plot(t_excel,tl_excel, 'r' ,'LineWidth',1.5);title('Torque  TL [N/m]');grid on;h
 
 
 
-
 %Se declaran los parámetros del sistema
 LAA = .56; 
 J = .0019;
 RA = 1.35;
-Bm = .082;
+Bm = .000792; % figura 6.9 Kuo (version en ingles) cap 6.2.1
 Ki = 1;
 Km = 1;
 
@@ -48,7 +49,7 @@ Km = 1;
 %Matrices a lazo abierto
 Ac=[-RA/LAA    -Km/LAA    0; %x1 = Corriente
       Ki/J      -Bm/J     0; %x2 = Velocidad angular
-       0         1        0] %x3 = Posición angular
+       0         1        0] %x3 = Angulo
       
 Bc=[1/LAA;
       0;
@@ -70,14 +71,14 @@ Dc=[0]
 
 
 %Tiempos
-Ts = 1e-2;         %Tiempo de muestreo
-T = 15;              %Tiempo de simulación – Más lento
-At = 1e-5;            %Tiempo de integración – Más rápido
+Ts = 3e-3;         %Tiempo de muestreo
+T = 20;              %Tiempo de simulación – Más lento
+At = Ts;            %Tiempo de integración – Más rápido
 Kmax = (T/At);
 
 %Definición de variables
 titaRef = (-pi/2);   %Valor de referencia inicial
-Tl = 0.1035%1.5;        %Torque (solo para pi/2)
+Tl =1.5; %0.1035 %este valor es el promedio del excel        %Torque (solo para pi/2)
 tc = 5;        %Tiempo en el que se pasa la referencia de pi/2 a -pi/2
 est = 0;
 
@@ -88,9 +89,9 @@ w = 0:At:T;
 w_p = 0:At:T;
 theta = 0:At:T;
 
-u = linspace(0,0,Kmax+2);
-ref = linspace(0,0,Kmax+2);
-torque = linspace(0,0,Kmax+2);
+u = linspace(0,0,Kmax+1);
+ref = linspace(0,0,Kmax+1);
+torque = linspace(0,0,Kmax+1);
 %Condiciones Iniciales
 ia(1) = 0;
 w(1) = 0;
@@ -113,43 +114,37 @@ sys_d = c2d(sys_c,Ts,'zoh');
 A = sys_d.a;
 B = sys_d.b;
 C = sys_d.c;
-
-%Punto N°1: se implementa un controlador en  tiempo discreto
-
-%CÁLCULO DEL CONTROLADOR
-%Método: LQR (Linear Quadratic Regulator)
-
-%Se verifica la controlabilidad
-%Es alcanzable <-> rank(Ma)= 4, ya que n=4
-%Es controlable <-> rank(Ma)= rank(Mc)
  
 %Matriz de Ma y Mc
-% Ma = [B A*B A^2*B A^3*B];      %Alcanzabilidad
-% Mc = [B A*B A^2*B A^3*B A^4];  %Controlabilidad
-%  
-% Alcanzabilidad = rank(Ma)
-% Controlabilidad = rank(Mc)
+% Ma = [B A*B A^2*B A^3*B]; Alcanzabilidad = rank(Ma)    %Alcanzabilidad
+% Mc = [B A*B A^2*B A^3*B A^4]; Controlabilidad = rank(Mc) %Controlabilidad
+
+% Para el integrador
+Cref = Cc(1,:);
+AA=[A,zeros(3,1);-Cref*A,eye(1)]
+BB=[B;-Cref*B]
 
 
 %Parámetros del controlador LQR
-d = [1e-5 1e-6 1.9e2];%Corriente, Ángulo, Velocidad angular
+% d = [1e-5 1e-6 1.9e2 0.001];%Corriente, Ángulo, Velocidad angular
+d = [1 1 1 0.1];%Corriente, velocidad , Ángulo
 Q = diag(d);
-R = 4;            %Dimensionar para que no pase de 24 v
+R = 1e-2;            %Dimensionar para que no pase de 24 v
+Kk = dlqr(AA, BB, Q, R);
+K= Kk(1:3);
+Ki = -Kk(4);
 
-K= dlqr(A, B, Q, R)
 
 %Punto N°2: se implementa un controlador con observador
 %Observador
-Ao = A'
-Bo = Cc'
-Co = B'
-
+Ao = A';
+Bo = Cc';
+Co = B';
 %Parámetros del controlador LQR observador
-do = [1 100 1000];%Corriente, Ángulo, Velocidad angular
+do = [1e1 10 .09e0];%Corriente, Ángulo, Velocidad angular
 Qo = diag(do); 
-Ro=[1000    0  ;
-      0    1000];
-
+Ro=[1e1    0  ;
+      0    1e1];
 Ko = (dlqr(Ao,Bo,Qo,Ro))'
 
 %Ganancia de prealimentación
@@ -158,9 +153,9 @@ Gj = inv(Cc(1,:)*inv(eye(3)-A+B*K)*B);
 %Simulación
 ii = 1;
 kk = 0;
-
-while(ii<(Kmax+1))
-    
+% psi(1)=0;
+v(1) = 0;
+while(ii<(Kmax))
     kk=kk+At;
     if(kk>tc)
         titaRef=titaRef*(-1);
@@ -177,12 +172,15 @@ while(ii<(Kmax+1))
     torque(ii)=TL ;
     estado=[ia(ii); w(ii); theta(ii)];
     
+    y_sal=Cc*estado;
+    v(ii+1)=v(ii)+ref(ii)-y_sal(1);
+    
     %Ley de control
-%     u(ii)=-K*estado+Gj*ref(ii); %Sin observador
-    u(ii) = -K*x_hat+Gj*ref(ii); %Con observador
+%     u(ii)=-K*estado+Ki*v(ii+1); %Sin observador  %+Gj*ref(ii)
+    u(ii) = -K*x_hat+Ki*v(ii+1); %Con observador
     
     %Punto N°4: se aumenta la zona muerta hasta alcanzar valores inaceptables
-    zona_muerta=0;
+    zona_muerta=1;
     
     %Zona Muerta
     if(abs(u(ii))<zona_muerta)
@@ -193,7 +191,7 @@ while(ii<(Kmax+1))
     
     %----------------------------------------------
     
-    y_sal = Cc*estado;
+%     y_sal = Cc*estado;
     y_sal_o=Cc*x_hat;
     
     %Integracion de Euler
@@ -208,33 +206,21 @@ while(ii<(Kmax+1))
   
 end
 
-color1='r';
-color2='r';
-color3='k';
 
 %Gráficos
-figure(2);
 
-subplot(3,1,1);grid on;hold on;
-plot(t,theta,color1,'LineWidth',1.5);
-plot(t,ref,color3,'LineWidth',1.5);title('\theta_t'); xlabel('Tiempo en Seg.');
-% plot(t_excel,phi_excel, 'b' ,'LineWidth',1.5);
+figure(2)
+subplot(3,2,1);hold on;
+plot(t,theta, color ,'LineWidth',1.5);title('Angulo  \phi [rad]'); grid on;hold on;
+plot(t,ref,'g','LineWidth',1.5)
+subplot(3,2,2);hold on;
+plot(t,w, color ,'LineWidth',1.5);title('Velocidad Angular  \omega [rad/s]');grid on;hold on; 
+subplot(3,2,3);hold on;
+plot(t,ia, color ,'LineWidth',1.5);title('Corriente  Ia [A]');grid on;hold on; 
+subplot(3,2,4);hold on;
+plot(t,u, color ,'LineWidth',1.5);title('Acción de control  V [V]');grid on;hold on;
+subplot(3,1,3);hold on;
+plot(t,torque, color ,'LineWidth',1.5);title('Torque  TL [N/m]');grid on;hold on;
 
-subplot(3,1,2);grid on; hold on;
-plot(t,ia,color1,'LineWidth',1.5);title('i_a');hold on; xlabel('Tiempo en Seg.');
-% plot(t_excel,ia_excel, 'b' ,'LineWidth',1.5);
-
-subplot(3,1,3);grid on;hold on;
-plot(t,u,color2,'LineWidth',1.5);title('Accion de control u_t');xlabel('Tiempo en Seg.');
-% plot(t_excel,v_excel, 'b' ,'LineWidth',1.5);
-
-
-% plot(t_excel,w_excel, 'r' ,'LineWidth',1.5);title('Velocidad Angular  \omega [rad/s]');grid on;hold on; 
-% subplot(3,2,3);hold on;
-% plot(t_excel,ia_excel, 'r' ,'LineWidth',1.5);title('Corriente  Ia [A]');grid on;hold on; 
-% subplot(3,2,4);hold on;
-% plot(t_excel,v_excel, 'r' ,'LineWidth',1.5);title('Tensión  V [V]');grid on;hold on;
-% subplot(3,1,3);hold on;
-% plot(t_excel,tl_excel, 'r' ,'LineWidth',1.5);title('Torque  TL [N/m]');grid on;hold on;
-% 
-% 
+figure(3)
+plot(theta,w, color ,'LineWidth',1.5);title('Plano de Fases'); grid on;hold on;
