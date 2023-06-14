@@ -28,7 +28,7 @@ Dc=[0];
 
 
 %Condiciones iniciales
-alfa(1) = pi;               %Ángulo inicial
+alfa(1) = pi;           %Ángulo inicial
 ref = 10;               %Posición de referencia           
 flag = 0;
 
@@ -57,12 +57,11 @@ AA=[A,zeros(4,1);-Cref*A,eye(1)];
 BB=[B;-Cref*B];
 
 % %Matriz de Ma y Mc
-% Ma = [BB AA*BB AA^2*BB AA^3*BB AA^4*BB AA^5*BB]; Alcanzabilidad = rank(Ma);
 % Mc = [BB AA*BB AA^2*BB AA^3*BB AA^4*BB AA^5*BB AA^6]; Controlabilidad = rank(Mc); 
-
+% Ma = [BB AA*BB AA^2*BB AA^3*BB AA^4*BB AA^5*BB]; Alcanzabilidad = rank(Ma);
 
 %parametros DLQR   de 0 a 10 m
-dd = [.1 .01 .01 .1 0.00001]; %Desplazamiento, Velocidad, Angulo, Velocidad angular, Integrador
+dd = [.1 .01 .01 .1 0.00001];               %Desplazamiento, Velocidad, Angulo, Velocidad angular, Integrador
 QQ = diag(dd);
 RR = 2.3e-4;                    
 
@@ -74,10 +73,10 @@ KI = -KK(5);
 %matrices para m*10
 m2 = m*10;
 
-Ac_m2=[0       1               0       0;  %x1=delta - desplazamiento
-    0    -Fricc/M         -m2*g/M    0;  %x2=delta_p
-    0       0               0       1;  %x3=phi - angulo
-    0  -Fricc/(l*M)  -g*(m2+M)/(l*M) 0];  %x4=phi_p
+Ac_m2=[0       1               0       0;            %x1=delta - desplazamiento
+    0    -Fricc/M         -m2*g/M    0;              %x2=delta_p
+    0       0               0       1;               %x3=phi - angulo
+    0  -Fricc/(l*M)  -g*(m2+M)/(l*M) 0];             %x4=phi_p
 
 sys_c_m2 = ss(Ac_m2, Bc, Cc, Dc);
 sys_d_m2=c2d(sys_c_m2,Ts,'zoh'); 
@@ -87,10 +86,10 @@ A_m2 = sys_d_m2.a;
 B_m2 = sys_d_m2.b;
 C_m2 = sys_d_m2.c;
 
-AA_m2=[A_m2,zeros(4,1);-Cref*A_m2,eye(1)];% para el integrador de m2
+AA_m2=[A_m2,zeros(4,1);-Cref*A_m2,eye(1)];          % para el integrador de m2
 
 % parametros DLQR
-dd_m2 = [.1 1e-3 1e-3 .1 0.001]; %Desplazamiento, Velocidad, Angulo, Velocidad angular, Integrador
+dd_m2 = [.1 1e-3 1e-3 .1 0.001];                    %Desplazamiento, Velocidad, Angulo, Velocidad angular, Integrador
 QQ_m2 = diag(dd);
 RR_m2 = .008;                    
 
@@ -105,9 +104,9 @@ Bo = Cc';
 Co = B';
 
 %parametros DLRQ- Observador
-do = [0.001 1000 0.5 0.0001]; %Desplazamiento, Velocidad, Ã?ngulo, Velocidad angular
+do = [.01 .01 .01 .0001]; %Desplazamiento, Velocidad, Ã?ngulo, Velocidad angular
 Qo = diag(do); 
-Ro = diag([80 10000]);
+Ro = diag([10000 100000]);
 
 Kko = dlqr(Ao,Bo,Qo,Ro);
 Ko=Kko';
@@ -140,7 +139,7 @@ for ki=1:Kmax
     
     %Ley de control
     u1(ki)=-K*(x-xop)+KI*v(ki+1); %color = '';%Sin observador
-    %u1(ki)=-K*x_hat+KI*v(ki+1);color = ''; %Con observador
+%     u1(ki)=-K*x_hat+KI*v(ki+1);color = ''; %Con observador
     
     %Zona Muerta
     zona_muerta=0;
@@ -194,14 +193,14 @@ plot(t,p_p,color,'LineWidth',1.5);title('Velocidad de grúa \theta_p');
 subplot(3,1,3); grid on; hold on;
 plot(t,u,color,'LineWidth',1.5);title('Acción de control u');xlabel('Tiempo en Seg.');
 % 
-figure(2);
-subplot(2,1,1);grid on; hold on;
-plot(alfa,w,color,'LineWidth',1.5);
-title('Ángulo vs Velocidad angular');
-xlabel('Ángulo');ylabel('Velocidad angular');
-
-subplot(2,1,2);grid on; hold on;
-plot(p,p_p,color,'LineWidth',1.5);
-title('Distancia vs velocidad');
-xlabel('Distancia');ylabel('Velocidad');
+% figure(2);
+% subplot(2,1,1);grid on; hold on;
+% plot(alfa,w,color,'LineWidth',1.5);
+% title('Ángulo vs Velocidad angular');
+% xlabel('Ángulo');ylabel('Velocidad angular');
+% 
+% subplot(2,1,2);grid on; hold on;
+% plot(p,p_p,color,'LineWidth',1.5);
+% title('Distancia vs velocidad');
+% xlabel('Distancia');ylabel('Velocidad');
 

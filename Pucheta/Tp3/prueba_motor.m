@@ -11,31 +11,27 @@
 % verificando el resultado con las curvas del archivo xlsx adjunto
 %%
 close all; clear all; clc;
-% color='r';
-color='b';
 
-% %Se importan los datos de la tabla excel
-% valores=xlsread('Curvas_Medidas_Motor_2023.xls'); 
-% t_excel=valores(1:end,1);    %tiempo
-% phi_excel=valores(1:end,2);  %angulo
-% w_excel=valores(1:end,3);    %velocidad angular
-% ia_excel=valores(1:end,4);   %corriente
-% v_excel=valores(1:end,5);    %tension
-% tl_excel=valores(1:end,6);   %torque
-% 
-% figure(1)
-% subplot(3,2,1);hold on;
-% plot(t_excel,phi_excel, 'r' ,'LineWidth',1.5);title('Angulo  \phi [rad]'); grid on;hold on; 
-% subplot(3,2,2);hold on;
-% plot(t_excel,w_excel, 'r' ,'LineWidth',1.5);title('Velocidad Angular  \omega [rad/s]');grid on;hold on; 
-% subplot(3,2,3);hold on;
-% plot(t_excel,ia_excel, 'r' ,'LineWidth',1.5);title('Corriente  Ia [A]');grid on;hold on; 
-% subplot(3,2,4);hold on;
-% plot(t_excel,v_excel, 'r' ,'LineWidth',1.5);title('Tensión  V [V]');grid on;hold on;
-% subplot(3,1,3);hold on;
-% plot(t_excel,tl_excel, 'r' ,'LineWidth',1.5);title('Torque  TL [N/m]');grid on;hold on;
-
-
+% % %Se importan los datos de la tabla excel
+% % valores=xlsread('Curvas_Medidas_Motor_2023.xls'); 
+% % t_excel=valores(1:end,1);    %tiempo
+% % phi_excel=valores(1:end,2);  %angulo
+% % w_excel=valores(1:end,3);    %velocidad angular
+% % ia_excel=valores(1:end,4);   %corriente
+% % v_excel=valores(1:end,5);    %tension
+% % tl_excel=valores(1:end,6);   %torque
+% % 
+% % figure(1)
+% % subplot(3,2,1);hold on;
+% % plot(t_excel,phi_excel, 'r' ,'LineWidth',1.5);title('Angulo  \phi [rad]'); grid on;hold on; 
+% % subplot(3,2,2);hold on;
+% % plot(t_excel,w_excel, 'r' ,'LineWidth',1.5);title('Velocidad Angular  \omega [rad/s]');grid on;hold on; 
+% % subplot(3,2,3);hold on;
+% % plot(t_excel,ia_excel, 'r' ,'LineWidth',1.5);title('Corriente  Ia [A]');grid on;hold on; 
+% % subplot(3,2,4);hold on;
+% % plot(t_excel,v_excel, 'r' ,'LineWidth',1.5);title('Tensión  V [V]');grid on;hold on;
+% % subplot(3,1,3);hold on;
+% % plot(t_excel,tl_excel, 'r' ,'LineWidth',1.5);title('Torque  TL [N/m]');grid on;hold on;
 
 %Se declaran los parámetros del sistema
 LAA = .56; 
@@ -116,33 +112,39 @@ B = sys_d.b;
 C = sys_d.c;
  
 %Matriz de Ma y Mc
-Mc = [B A*B A^2*B A^3*B A^4]; Controlabilidad = rank(Mc) %Controlabilidad
-Ma = [B A*B A^2*B A^3*B]; Alcanzabilidad = rank(Ma)    %Alcanzabilidad
+% Ma = [B A*B A^2*B A^3*B]; Alcanzabilidad = rank(Ma)    %Alcanzabilidad
+% Mc = [B A*B A^2*B A^3*B A^4]; Controlabilidad = rank(Mc) %Controlabilidad
 
 % Para el integrador
 Cref = Cc(1,:);
 AA=[A,zeros(3,1);-Cref*A,eye(1)]
 BB=[B;-Cref*B]
 
-%Parámetros del controlador LQR
 
-d = [1 1 1 0.1];    %Corriente, velocidad , Ángulo
+%Parámetros del controlador LQR
+% d = [1e-5 1e-6 1.9e2 0.001];%Corriente, Ángulo, Velocidad angular
+d = [1 1 1 0.1];%Corriente, velocidad , Ángulo
 Q = diag(d);
 R = 1e-2;            %Dimensionar para que no pase de 24 v
 Kk = dlqr(AA, BB, Q, R);
 K= Kk(1:3);
 Ki = -Kk(4);
 
+
+%Punto N°2: se implementa un controlador con observador
 %Observador
 Ao = A';
 Bo = Cc';
 Co = B';
 %Parámetros del controlador LQR observador
-do = [1e1 10 .09e0];    %Corriente, velocidad, angulo
+do = [1e1 10 .09e0];%Corriente, Ángulo, Velocidad angular
 Qo = diag(do); 
 Ro=[1e1    0  ;
       0    1e1];
 Ko = (dlqr(Ao,Bo,Qo,Ro))'
+
+%Ganancia de prealimentación
+Gj = inv(Cc(1,:)*inv(eye(3)-A+B*K)*B);
 
 %Simulación
 ii = 1;
@@ -170,10 +172,11 @@ while(ii<(Kmax))
     v(ii+1)=v(ii)+ref(ii)-y_sal(1);
     
     %Ley de control
-    u(ii)=-K*estado+Ki*v(ii+1); %Sin observador  
-%     u(ii) = -K*x_hat+Ki*v(ii+1); %Con observador
+%     u(ii)=-K*estado+Ki*v(ii+1); %Sin observador  %+Gj*ref(ii)
+    u(ii) = -K*x_hat+Ki*v(ii+1); %Con observador
     
-    zona_muerta=3;
+    %Punto N°4: se aumenta la zona muerta hasta alcanzar valores inaceptables
+    zona_muerta=1
     
     %Zona Muerta
     if(abs(u(ii))<zona_muerta)
@@ -184,6 +187,7 @@ while(ii<(Kmax))
     
     %----------------------------------------------
     
+%     y_sal = Cc*estado;
     y_sal_o=Cc*x_hat;
     
     %Integracion de Euler
@@ -203,16 +207,16 @@ end
 
 figure(2)
 subplot(3,2,1);hold on;
-plot(t,ref,'g','LineWidth',1.5);title('Angulo  \phi [rad]'); grid on;hold on;
-plot(t,theta, color ,'LineWidth',1.5)
+plot(t,theta, 'b' ,'LineWidth',1.5);title('Angulo  \phi [rad]'); grid on;hold on;
+plot(t,ref,'g--','LineWidth',1.5)
 subplot(3,2,2);hold on;
-plot(t,w, color ,'LineWidth',1.5);title('Velocidad Angular  \omega [rad/s]');grid on;hold on; 
+plot(t,w, 'b' ,'LineWidth',1.5);title('Velocidad Angular  \omega [rad/s]');grid on;hold on; 
 subplot(3,2,3);hold on;
-plot(t,ia, color ,'LineWidth',1.5);title('Corriente  Ia [A]');grid on;hold on; 
+plot(t,ia, 'b' ,'LineWidth',1.5);title('Corriente  Ia [A]');grid on;hold on; 
 subplot(3,2,4);hold on;
-plot(t,u, color ,'LineWidth',1.5);title('Acción de control  V [V]');grid on;hold on;
+plot(t,u, 'b' ,'LineWidth',1.5);title('Acción de control  V [V]');grid on;hold on;
 subplot(3,1,3);hold on;
-plot(t,torque, color ,'LineWidth',1.5);title('Torque  TL [N/m]');grid on;hold on;
+plot(t,torque, 'b' ,'LineWidth',1.5);title('Torque  TL [N/m]');grid on;hold on;
 
 figure(3)
-plot(theta,w, color ,'LineWidth',1.5);title('Plano de Fases'); grid on;hold on;
+plot(theta,w)

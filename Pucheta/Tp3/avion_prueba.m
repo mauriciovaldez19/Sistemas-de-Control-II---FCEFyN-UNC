@@ -19,15 +19,44 @@ Bc=[   0;
     (w^2)*b;
        0]
        
-Cc=[0 0 0 1]   %La salida es la altura
+Cc=[0 0 0 1;0 1 0 0]   %La salida es la altura y angulo
 
 Dc=[0]
 
 %val=real(1/eig(Ac))
 
-%Punto N°3: Establecer el Ts más adecuado
-%Tiempos
-% Ts = 0.001;             %Tiempo de muestreo  
+% Polos deseados para el controlador
+p1 = -15+15i;
+p2 = -15-15i;
+p3 = -0.5+0.5i;
+p4 = -0.5-0.5i;
+polos = [p1 p2 p3 p4];
+
+Kk=place(Ac,Bc,polos)
+
+
+% %LQR
+% d = [.1 .1 1 1]; %Alpha, Phi, Phi_p, Altura
+% Q = diag(d);
+% R = 1000;                  
+% Kk = lqr(Ac, Bc, Q, R)
+
+%Punto N°2: se implementa un controlador con observador
+%Observador
+Ao = Ac'
+Bo = Cc'
+Co = Bc'
+
+
+do = [1 1 1 1];
+Qo = diag(do); 
+Ro=[1e2    0  ;
+      0    1e2];;
+
+Ko = (lqr(Ao,Bo,Qo,Ro))'
+
+%Ganancia de prealimentación
+Gj = inv(Cc*inv(eye(4)-Ac+Bc*Kk)*Bc);
 T = 70;                 %Tiempo de simulación
 At = 0.001;             %Tiempo de integración 
 pasos = T/At; 
@@ -49,29 +78,6 @@ u(1) = 0;
 href = 100;             %Altura de referencia - Modificar a -100
 
 
-%LQR
-d = [.1 .1 1 1]; %Alpha, Phi, Phi_p, Altura
-Q = diag(d);
-R = 1000;                    %Dimensiona la acci�n de control
-
-K = lqr(Ac, Bc, Q, R)
-
-%Punto N°2: se implementa un controlador con observador
-%Observador
-Ao = Ac'
-Bo = Cc'
-Co = Bc'
-
-%Parámetros del controlador DLQR observador
-do = [0.0000001 0.0000001 0.000001 100];
-Qo = diag(do); 
-Ro = 100;
-
-Ko = (lqr(Ao,Bo,Qo,Ro))'
-
-%Ganancia de prealimentación
-Gj = inv(Cc*inv(eye(4)-Ac+Bc*K)*Bc);
-
 %Se definen los integradores y se setean a cero
 alfap = 0:At:T;
 fip = 0:At:T;
@@ -86,7 +92,7 @@ while(i<(pasos+1))
     x=[alfa(i);fi(i);fip(i);h(i)];
     
     %Ley de control
-    u(i)=-K*x+Gj*href; %Sin observador
+    u(i)=-Kk*x+Gj*href; %Sin observador
     %u(i) = -K*x_hat+Gj*href; %Con observador
     
     
