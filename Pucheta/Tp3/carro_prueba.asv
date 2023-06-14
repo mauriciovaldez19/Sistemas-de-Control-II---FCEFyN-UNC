@@ -27,6 +27,31 @@ Cc=[1 0 0 0;
 Dc=[0];
 
 
+%matrices para m*10
+m2 = m*10;
+
+Ac_m2=[0       1               0       0;  %x1=delta - desplazamiento
+    0    -Fricc/M         -m2*g/M    0;  %x2=delta_p
+    0       0               0       1;  %x3=phi - angulo
+    0  -Fricc/(l*M)  -g*(m2+M)/(l*M) 0];  %x4=phi_p
+
+sys_c_m2 = ss(Ac_m2, Bc, Cc, Dc);
+sys_d_m2=c2d(sys_c_m2,Ts,'zoh');   
+%Matrices de lazo abierto en el equilibrio estable
+A_m2 = sys_d_m2.a;
+B_m2 = sys_d_m2.b;
+C_m2 = sys_d_m2.c;
+
+%integrador nuevo
+Cref = Cc(1,:);
+
+AA_m2=[A_m2,zeros(4,1);-Cref*A_m2,eye(1)];
+BB_m2=[B;-Cref*B];
+
+
+
+% val=real(1/eig(Ac));
+
 %Condiciones iniciales
 alfa(1) = pi;               %Ángulo inicial
 ref = 10;               %Posición de referencia           
@@ -34,9 +59,9 @@ flag = 0;
 
 
 %Tiempos
-Ts = 1e-2;          
-T = 15;            
-At = 1e-4;          
+Ts = 1e-1;          
+T = 20;            
+At = Ts;          
 Kmax = T/Ts;
 
 %Pasaje de tiempo continuo a tiempo discreto
@@ -55,47 +80,33 @@ Cref = Cc(1,:);
 AA=[A,zeros(4,1);-Cref*A,eye(1)];
 BB=[B;-Cref*B];
 
+AA_m2=[A_m2,zeros(4,1);-Cref*A_m2,eye(1)];
+
 % %Matriz de Ma y Mc
 % Ma = [BB AA*BB AA^2*BB AA^3*BB AA^4*BB AA^5*BB]; Alcanzabilidad = rank(Ma);
 % Mc = [BB AA*BB AA^2*BB AA^3*BB AA^4*BB AA^5*BB AA^6]; Controlabilidad = rank(Mc); 
 
 
 %parametros DLQR   de 0 a 10 m
-dd = [.1 1e-2 10 .1 0.001]; %Desplazamiento, Velocidad, Angulo, Velocidad angular, Integrador
+dd = [.1 1e-3 1e-3 .1 0.001]; %Desplazamiento, Velocidad, Angulo, Velocidad angular, Integrador
 QQ = diag(dd);
-RR = .0095;                    
+RR = .008;                    
 
 KK = dlqr(AA,BB,QQ,RR);
 K = KK(1:4);
 KI = -KK(5);
 
-% Controlador  de 10 a 0 m
-%matrices para m*10
-m2 = m*10;
+%parametros DLQR   de 10 a 0 m
 
-Ac_m2=[0       1               0       0;  %x1=delta - desplazamiento
-    0    -Fricc/M         -m2*g/M    0;  %x2=delta_p
-    0       0               0       1;  %x3=phi - angulo
-    0  -Fricc/(l*M)  -g*(m2+M)/(l*M) 0];  %x4=phi_p
 
-sys_c_m2 = ss(Ac_m2, Bc, Cc, Dc);
-sys_d_m2=c2d(sys_c_m2,Ts,'zoh'); 
 
-%Matrices de lazo abierto en el equilibrio estable
-A_m2 = sys_d_m2.a;
-B_m2 = sys_d_m2.b;
-C_m2 = sys_d_m2.c;
-
-AA_m2=[A_m2,zeros(4,1);-Cref*A_m2,eye(1)];% para el integrador de m2
-
-% parametros DLQR
 dd_m2 = [.1 1e-3 1e-3 .1 0.001]; %Desplazamiento, Velocidad, Angulo, Velocidad angular, Integrador
 QQ_m2 = diag(dd);
 RR_m2 = .008;                    
 
-KK_m2 = dlqr(AA_m2,BB,QQ_m2,RR_m2);
-K_m2 = KK_m2(1:4);
-KI_m2 = -KK_m2(5);
+KK_m2 = dlqr(AA,BB,QQ,RR);
+K_m2 = KK(1:4);
+KI_m2 = -KK(5);
 
 
 
@@ -168,8 +179,6 @@ for ki=1:Kmax
                 ref=0
                 m=m*10;
                 flag=1;
-                K=K_m2;
-                KI=KI_m2;
             end
         end
         i=i+1;
@@ -186,7 +195,7 @@ subplot(3,2,1); grid on; hold on;
 plot(t,w,color,'LineWidth',1.5);grid on; title('Velocidad angular \omega');
 
 subplot(3,2,2); grid on; hold on;
-plot(t,alfa/pi*100,color,'LineWidth',1.5); title('Ángulo \phi');xlabel('Tiempo');
+plot(t,alfa,color,'LineWidth',1.5); title('Ángulo \phi');xlabel('Tiempo');
 
 subplot(3,2,3); grid on; hold on;
 plot(t,p,color,'LineWidth',1.5);title('Posición grúa \theta');xlabel('Tiempo');
