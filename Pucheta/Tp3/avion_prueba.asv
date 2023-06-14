@@ -48,29 +48,54 @@ h(1) = -500;            %Altura inicial - Modificar a 500
 u(1) = 0;
 href = 100;             %Altura de referencia - Modificar a -100
 
+%Pasaje de tiempo continuo a tiempo discreto
+% sys_c = ss(Ac, Bc, Cc, Dc);
+% sys_d=c2d(sys_c,Ts,'zoh');
 
-%LQR
-d = [.1 .1 1 1]; %Alpha, Phi, Phi_p, Altura
+%TIEMPO DISCRETO
+%Matrices de lazo abierto
+% A = sys_d.a;
+% B = sys_d.b;
+% C = sys_d.c;
+
+%Punto N°1: se implementa un controlador en  tiempo discreto
+
+%DISEÑO DEL CONTROLADOR
+%Método: DLQR (Discret Linear Quadratic Regulator)
+
+%Se verifica la controlabilidad
+%Es alcanzable <-> rank(Ma)= 4, ya que n=4
+%Es controlable <-> rank(Ma)= rank(Mc)
+ 
+%Matriz de Ma y Mc
+% Ma = [B A*B A^2*B A^3*B];       %Alcanzabilidad
+% Mc = [B A*B A^2*B A^3*B A^4];   %Controlabilidad
+ 
+% Alcanzabilidad = rank(Ma)
+% Controlabilidad = rank(Mc)
+
+%Parámetros del controlador DLQR
+d = [1 1000 150000 0.05]; %Alpha, Phi, Phi_p, Altura
 Q = diag(d);
-R = 1000;                    %Dimensiona la acci�n de control
+R = 1;                    %Dimensiona la acción de control
 
-K = lqr(Ac, Bc, Q, R)
+K = dlqr(Ac, Bc, Q, R)
 
 %Punto N°2: se implementa un controlador con observador
 %Observador
-Ao = Ac'
+Ao = A'
 Bo = Cc'
-Co = Bc'
+Co = B'
 
 %Parámetros del controlador DLQR observador
 do = [0.0000001 0.0000001 0.000001 100];
 Qo = diag(do); 
 Ro = 100;
 
-Ko = (lqr(Ao,Bo,Qo,Ro))'
+Ko = (dlqr(Ao,Bo,Qo,Ro))'
 
 %Ganancia de prealimentación
-Gj = inv(Cc*inv(eye(4)-Ac+Bc*K)*Bc);
+Gj = inv(Cc*inv(eye(4)-A+B*K)*B);
 
 %Se definen los integradores y se setean a cero
 alfap = 0:At:T;
@@ -81,7 +106,7 @@ hp = 0:At:T;
 x_hat = [0; 0 ;0; 0];
 i=1;
 
-%Simulaci�n
+%Simulación
 while(i<(pasos+1))
     x=[alfa(i);fi(i);fip(i);h(i)];
     
@@ -89,6 +114,17 @@ while(i<(pasos+1))
     u(i)=-K*x+Gj*href; %Sin observador
     %u(i) = -K*x_hat+Gj*href; %Con observador
     
+    %Punto N°4: se aumenta la zona muerta hasta alcanzar valores inaceptables
+    zona_muerta=0;
+    
+    %Zona Muerta
+    if(abs(u(i))<zona_muerta)
+        u(i)=0;
+    else
+        u(i)=sign(u(i))*(abs(u(i))-zona_muerta);
+    end
+    
+    %-------------------------------------------
     
     %EDOS, Sistema Real:
     alfap = a*(fi(i)-alfa(i));
@@ -96,9 +132,9 @@ while(i<(pasos+1))
     hp = c*alfa(i);
     y_sal = Cc*x;
     y_sal_o=Cc*x_hat;
-    x_hat = Ac*x_hat+Bc*u(i)+Ko*(y_sal - y_sal_o);
+    x_hat = A*x_hat+B*u(i)+Ko*(y_sal - y_sal_o);
     
-    %Integraci�n por Euler
+    %Integración por Euler
     alfa(i+1) = alfa(i) + alfap*At;
     fip(i+1)=fip(i)+fipp*At;
     fi(i+1) = fi(i) + fip(i)*At;
@@ -110,7 +146,7 @@ end
 
 color='';
 
-%Gr�ficos
+%Gráficos
 figure(1);hold on;
 subplot(3,2,1);hold on;grid on;
 plot(t,h,color);hold on;title('Altura h');xlabel('Tiempo');
@@ -125,4 +161,4 @@ subplot(3,2,4);hold on; grid on;
 plot(t,fip, color);title('\phi_p');xlabel('Tiempo');
 
 subplot(3,1,3);hold on;grid on;
-plot(t,u,color);grid on;title('Acci�n de control u');xlabel('Tiempo');
+plot(t,u,color);grid on;title('Acción de control u');xlabel('Tiempo');
