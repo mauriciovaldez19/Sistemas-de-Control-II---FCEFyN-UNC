@@ -34,8 +34,9 @@ flag = 0;
 
 
 %Tiempos
-Ts = 1e-2;          
-T = 15;            
+% Ts = 1e-2; Rango posible de 8e-3 a 1e-2
+Ts = 1e-2; 
+T = 20;            
 At = 1e-4;          
 Kmax = T/Ts;
 
@@ -61,9 +62,9 @@ BB=[B;-Cref*B];
 
 
 %parametros DLQR   de 0 a 10 m
-dd = [.1 .1 .1 .1 0.00001]; %Desplazamiento, Velocidad, Angulo, Velocidad angular, Integrador
+dd = [.1 .01 .01 .1 0.00001]; %Desplazamiento, Velocidad, Angulo, Velocidad angular, Integrador
 QQ = diag(dd);
-RR = 1e-5;                    
+RR = 2.3e-4;                    
 
 KK = dlqr(AA,BB,QQ,RR);
 K = KK(1:4);
@@ -98,8 +99,6 @@ K_m2 = KK_m2(1:4);
 KI_m2 = -KK_m2(5);
 
 
-
-
 %Observador
 Ao = A';
 Bo = Cc';
@@ -114,8 +113,6 @@ Kko = dlqr(Ao,Bo,Qo,Ro);
 Ko=Kko';
 t = 0;
 
-%Ganancia de prealimentacion
-Gj = inv(Cref*inv(eye(4)-A+B*K)*B);
 
 x = [0;0;alfa(1);0];
 p = x(1);
@@ -186,7 +183,7 @@ subplot(3,2,1); grid on; hold on;
 plot(t,w,color,'LineWidth',1.5);grid on; title('Velocidad angular \omega');
 
 subplot(3,2,2); grid on; hold on;
-plot(t,alfa/pi*100,color,'LineWidth',1.5); title('聲gulo \phi');xlabel('Tiempo');
+plot(t,alfa,color,'LineWidth',1.5); title('聲gulo \phi');xlabel('Tiempo');
 
 subplot(3,2,3); grid on; hold on;
 plot(t,p,color,'LineWidth',1.5);title('Posici鏮 gr�a \theta');xlabel('Tiempo');
@@ -197,14 +194,14 @@ plot(t,p_p,color,'LineWidth',1.5);title('Velocidad de gr�a \theta_p');
 subplot(3,1,3); grid on; hold on;
 plot(t,u,color,'LineWidth',1.5);title('Acci鏮 de control u');xlabel('Tiempo en Seg.');
 % 
-% figure(2);
-% subplot(2,1,1);grid on; hold on;
-% plot(alfa,w,'');
-% title('聲gulo vs Velocidad angular');
-% xlabel('聲gulo');ylabel('Velocidad angular');
-% 
-% subplot(2,1,2);grid on; hold on;
-% plot(p,p_p, '');
-% title('Distancia vs velocidad');
-% xlabel('Distancia');ylabel('Velocidad');
+figure(2);
+subplot(2,1,1);grid on; hold on;
+plot(alfa,w,color,'LineWidth',1.5);
+title('聲gulo vs Velocidad angular');
+xlabel('聲gulo');ylabel('Velocidad angular');
+
+subplot(2,1,2);grid on; hold on;
+plot(p,p_p,color,'LineWidth',1.5);
+title('Distancia vs velocidad');
+xlabel('Distancia');ylabel('Velocidad');
 
