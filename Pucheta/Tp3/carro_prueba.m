@@ -61,9 +61,9 @@ BB=[B;-Cref*B];
 
 
 %parametros DLQR   de 0 a 10 m
-dd = [.1 1e-2 10 .1 0.001]; %Desplazamiento, Velocidad, Angulo, Velocidad angular, Integrador
+dd = [.1 .1 .1 .1 0.00001]; %Desplazamiento, Velocidad, Angulo, Velocidad angular, Integrador
 QQ = diag(dd);
-RR = .0095;                    
+RR = 1e-5;                    
 
 KK = dlqr(AA,BB,QQ,RR);
 K = KK(1:4);
