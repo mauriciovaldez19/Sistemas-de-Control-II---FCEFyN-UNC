@@ -1,6 +1,6 @@
 %Caso de estudio 3. Sistema no lineal de cuatro variables de estado
-close all;clear all; clc;
-color = 'r';
+%close all;clear all; clc;
+color = 'b';
 
 %Se declaran los parámetros del sistema
 m = 0.1;
@@ -139,7 +139,7 @@ for ki=1:Kmax
     
     %Ley de control
     u1(ki)=-K*(x-xop)+KI*v(ki+1); %color = '';%Sin observador
-%     u1(ki)=-K*x_hat+KI*v(ki+1);color = ''; %Con observador
+%     u1(ki)=-K*(x_hat-xop)+KI*v(ki+1);color = ''; %Con observador
     
     %Zona Muerta
     zona_muerta=0;
