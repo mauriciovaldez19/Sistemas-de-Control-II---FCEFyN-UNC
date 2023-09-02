@@ -14,7 +14,7 @@
 % delta y el ángulo phi, repetir las simulaciones para las condiciones anteriores 
 % y graficar los resultados en gráficas superpuestas para el equilibrio estable.
 %%
-% close all; clc; clear all;
+close all; clc; clear all;
 m=.1;Fricc=0.1; long=1.6;g=9.8;M=1.5;
 h=0.001;tiempo=(100/h);p_pp=0;tita_pp=0;
 %Condiciones iniciales
@@ -37,7 +37,7 @@ R = 1000;
 G_m1=-inv(Mat_C*(eye(4)-inv(Mat_A+Mat_B*K_m1))*Mat_B);
 
 % ------Controlador para m=1 de 2 a 0 metros
-% Necesito agregar un integradorG
+% Necesito agregar un integrador
 Mat_Aa = [Mat_A zeros(4,1);-Mat_C 0];
 Mat_Ba = [Mat_B; 0];
 Mat_Ca=[Mat_C 0];
@@ -51,14 +51,16 @@ G_m10= K_m10(1);
 
 %OBSERVADOR
 %redefino la matriz C para el observador
-Mat_Co=[1 0 1 0]; %La salida es posición y ángulo
+Mat_Co=[1 0 0 0;0 0 1 0]; %La salida es posición y ángulo
 
 % % ------Controlador para m=.1 de 0 a 2 metros
 Mat_A_O=Mat_A';
 Mat_B_O=Mat_Co';
-Qo = diag([1 .05 1 .05]); 
+% Ko_m1=place(Mat_A_O,Mat_B_O,[-200 -300 -400 -500]);
+% Qo = diag([1 .05 1 .05]); 
+Qo=Mat_Co'*Mat_Co;
 Ro = 100;
-[Ko_m1,So_m1,Po_m1] = lqr(Mat_A_O,Mat_B_O,Qo,Ro);
+Ko_m1 = lqr(Mat_A_O,Mat_B_O,Qo,Ro);
 % Go=Ko_m1(1); 
 Ko=Ko_m1';
 % Mat_M_Dual=[Mat_B_O Mat_A_O*Mat_B_O Mat_A_O^2*Mat_B_O Mat_A_O^3*Mat_B_O];%Matriz Controlabilidad
@@ -68,7 +70,7 @@ Ko=Ko_m1';
 Mat_A_O=Mat_A';
 Mat_B_O=Mat_Co';
 Qo_1 = diag([1 .1 1 .1]); 
-Ro_1 = 100;
+Ro_1 = [100 0;0 100];
 [Ko_m10,So_m10,Po_m10] = lqr(Mat_A_O,Mat_B_O,Qo_1,Ro_1);
 % Go=Ko_m10(1); 
 % Ko=Ko_m10';
@@ -76,7 +78,7 @@ Ro_1 = 100;
 % eig(Mat_A_O'-Ko*Mat_C) %Verifico que todos los polos estén en el semiplano izquierdo
 
  
-x_hat=[0;0;0;0]; %Inicializo el Observador
+x_hat=[0 0;0 0;0 0]; %Inicializo el Observador
 
 ref=2; 
 psi(1)=0;
@@ -95,11 +97,11 @@ psi (i+1) = psi(i)+psi_p*h;
         G = G_m10;
         Go=Ko_m10(1); 
         Ko=Ko_m10';
-        u(i)=-K*estado+G*ref+Ki*psi(i+1); color='r' %LQR con integrador , sin observador
-%         u(i)=-K*x_hat+G*ref; color='b';% con observador
+%         u(i)=-K*estado+G*ref+Ki*psi(i+1); color='r' %LQR con integrador , sin observador
+        u(i)=-K*x_hat+G*ref; color='b';% con observador
     else
-        u(i)=-K*estado+G*ref;  %color='r';% LQR sin integrador ,sin observador
-%         u(i)=-K*x_hat+G*ref; %color='b';% con observador
+%         u(i)=-K*estado+G*ref;  %color='r';% LQR sin integrador ,sin observador
+        u(i)=-K*x_hat+G*ref; %color='b';% con observador
 %     
     end
 %  
